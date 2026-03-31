@@ -2,9 +2,19 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class ToolCall:
+    id: str
+    type: str
+    name: str
+    arguments: dict[str, object]
+
+
+@dataclass(frozen=True)
 class Message:
     role: str
     content: str
+    tool_call_id: str | None = None
+    tool_calls: list[ToolCall] | None = None
 
 
 @dataclass(frozen=True)
@@ -12,13 +22,6 @@ class Usage:
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
-
-
-@dataclass(frozen=True)
-class ToolCall:
-    id: str
-    name: str
-    arguments: dict[str, object]
 
 
 @dataclass(frozen=True)

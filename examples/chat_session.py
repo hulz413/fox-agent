@@ -23,7 +23,7 @@ def main():
                 break
             case "history":
                 print("=== History ===")
-                for message in session.messages:
+                for message in session.get_history():
                     print(f"[{message.role}] {message.content}")
                 print()
                 continue
