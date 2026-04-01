@@ -17,7 +17,6 @@ class DeepSeekProvider:
     def chat(
         self, messages: list[Message], tools: list[dict] | None = None
     ) -> LLMResponse:
-        # response = self.client.chat.completions.create(
         payload: dict[str, object] = {
             "model": self.config.model,
             "temperature": self.config.temperature,
