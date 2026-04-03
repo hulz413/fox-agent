@@ -6,6 +6,10 @@ from src.tools.registry import ToolRegistry
 
 
 def main() -> None:
+        logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s | %(levelname)s | %(name)s] %(message)s",
+    )
     config = Config.from_env()
     client = LLMClient(config)
     tool_registry = ToolRegistry()
