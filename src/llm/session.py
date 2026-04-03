@@ -1,6 +1,10 @@
+import json
+import logging
 from src.llm.client import LLMClient
 from src.llm.schemas import Message, LLMResponse, ToolCall
 from src.tools.registry import ToolRegistry
+
+logger = logging.getLogger(__name__)
 
 
 class ChatSession:
@@ -41,29 +45,47 @@ class ChatSession:
         return list(self.messages)
 
     def chat(self, user_input: str) -> LLMResponse:
+        logger.info(f"User input: {user_input}")
         self.add_user_message(user_input)
         return self._run_loop()
 
     def _run_loop(self) -> LLMResponse:
-        for _ in range(self.max_steps):
+        for step in range(1, self.max_steps + 1):
+            logger.info(f"Step {step}/{self.max_steps} started")
             response = self.client.chat(
                 messages=self.messages, tools=self.tool_registry.list()
             )
+
+            if response.usage:
+                logger.info(
+                    "Model usage: "
+                    f"prompt={response.usage.prompt_tokens}, "
+                    f"completion={response.usage.completion_tokens}, "
+                    f"total={response.usage.total_tokens}"
+                )
+
             self.add_assistant_message(
                 content=response.content, tool_calls=response.tool_calls
             )
 
             if not response.tool_calls:
+                logger.info(f"Assistant final response: {response.content}")
                 return response
 
+            if response.content:
+                logger.info(f"Assistant response: {response.content}")
+
             for tool_call in response.tool_calls:
+                logger.info(
+                    f"Calling tool: {tool_call.name} with arguments={tool_call.arguments}"
+                )
                 tool = self.tool_registry.get(tool_call.name)
-                if tool is None:
-                    raise ValueError(f"Tool registry is missing tool: {tool_call.name}")
 
                 try:
                     result = tool.handler(**tool_call.arguments)
+                    logger.info(f"Tool calling {tool_call.name} result: {result}")
                 except Exception as e:
+                    logger.exception(f"Tool calling {tool_call.name} failed")
                     result = f"Tool call {tool_call.name} failed: {str(e)}"
                 self.add_tool_message(result, tool_call.id)
 
@@ -73,3 +95,4 @@ class ChatSession:
         self.messages = [
             message for message in self.messages if message.role == "system"
         ]
+        logger.info("Session cleared, system message preserved")
