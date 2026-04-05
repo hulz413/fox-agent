@@ -41,10 +41,14 @@ def main() -> None:
         client,
         tool_registry,
         system_prompt=("You are a helpful assistant. Use tools when needed."),
-        max_steps=5,
+        max_steps=10,
     )
 
-    user_input = "Get current time, and then decorate it."
+    user_input = (
+        "List files in the current directory, "
+        "then write 'Hello, Fox Agent!' to /tmp/hello.txt', "
+        "then read src/tools/builtins.py and summarize what tools are available."
+    )
     response = session.chat(user_input)
 
     print("Assistant: " + response.content)
