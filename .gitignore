@@ -2,6 +2,7 @@
 .venv/
 __pycache__/
 *.pyc
+CLAUDE.md
 .claude/
 .vscode/*
 !.vscode/launch.json
