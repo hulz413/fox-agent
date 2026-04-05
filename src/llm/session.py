@@ -1,4 +1,3 @@
-import json
 import logging
 from src.llm.client import LLMClient
 from src.llm.schemas import Message, LLMResponse, ToolCall
@@ -13,7 +12,7 @@ class ChatSession:
         client: LLMClient,
         tool_registry: ToolRegistry | None = None,
         system_prompt: str | None = None,
-        max_steps: int = 5,
+        max_steps: int = 10,
     ) -> None:
         self.client = client
         self.tool_registry = tool_registry or ToolRegistry()
