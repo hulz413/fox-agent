@@ -1,4 +1,7 @@
+import logging
 from src.tools.schemas import ToolDefinition
+
+logger = logging.getLogger(__name__)
 
 
 class ToolRegistry:
@@ -6,6 +9,7 @@ class ToolRegistry:
         self.tools: dict[str, ToolDefinition] = {}
 
     def register(self, tool: ToolDefinition):
+        logger.info(f"Registering tool: {tool.name}")
         if tool.name in self.tools:
             raise ValueError(f"Tool is already registered: {tool.name}")
         self.tools[tool.name] = tool

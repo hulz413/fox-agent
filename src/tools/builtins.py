@@ -1,6 +1,9 @@
+import json
 from datetime import datetime
 from pathlib import Path
 from src.tools.schemas import ToolDefinition
+
+MEMORY_STORE_FILE = Path("~/.fox-agent/memory_store.json").expanduser()
 
 
 def get_current_time() -> str:
@@ -10,9 +13,9 @@ def get_current_time() -> str:
 def list_files(path: str = ".") -> str:
     target = Path(path).expanduser().resolve()
     if not target.exists():
-        raise ValueError(f"Path {target} does not exist.")
+        raise ValueError(f"Path does not exist: {target}")
     if not target.is_dir():
-        raise ValueError(f"Path {target} is not a directory.")
+        raise ValueError(f"Path is not a directory: {target}")
 
     entries = sorted(target.iterdir(), key=lambda item: item.name.lower())
     if not entries:
@@ -28,9 +31,9 @@ def list_files(path: str = ".") -> str:
 def read_file(path: str, max_chars: int = 1024) -> str:
     target = Path(path).expanduser().resolve()
     if not target.exists():
-        raise ValueError(f"Path {target} does not exist.")
+        raise ValueError(f"Path does not exist: {target}")
     if not target.is_file():
-        raise ValueError(f"Path {target} is not a file.")
+        raise ValueError(f"Path is not a file: {target}")
 
     content = target.read_text(encoding="utf-8")
     if len(content) > max_chars:
@@ -49,7 +52,42 @@ def write_file(path: str, content: str) -> str:
         target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
 
-    return f"File {target} written successfully."
+    return f"File written successfully: {target}"
+
+
+def _load_memory_store() -> dict[str, str]:
+    if not MEMORY_STORE_FILE.exists():
+        return {}
+    if not MEMORY_STORE_FILE.is_file():
+        raise ValueError(f"Path is not a file: {MEMORY_STORE_FILE}")
+    with MEMORY_STORE_FILE.open("r", encoding="utf-8") as f:
+        memory: dict[str, str] = {}
+        data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError(f"Memory store must be a JSON object: {MEMORY_STORE_FILE}")
+        for key, value in data.items():
+            memory[str(key)] = str(value)
+        return memory
+
+
+def _save_memory_store(memory: dict[str, str]) -> None:
+    MEMORY_STORE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with MEMORY_STORE_FILE.open("w", encoding="utf-8") as f:
+        json.dump(memory, f, ensure_ascii=False, indent=2)
+
+
+def save_memory(key: str, value: str) -> str:
+    memory = _load_memory_store()
+    memory[key] = value
+    _save_memory_store(memory)
+    return f"Memory saved successfully: {key}"
+
+
+def load_memory(key: str) -> str:
+    memory = _load_memory_store()
+    if key not in memory:
+        raise ValueError(f"Memory not found for key {key}")
+    return memory[key]
 
 
 def build_builtin_tools() -> list[ToolDefinition]:
@@ -112,5 +150,39 @@ def build_builtin_tools() -> list[ToolDefinition]:
                 "required": ["path", "content"],
             },
             handler=write_file,
+        ),
+        ToolDefinition(
+            name="save_memory",
+            description="Save a memory value under a given key in persistent local storage.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "Memory key to store.",
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "Memory value to store.",
+                    },
+                },
+                "required": ["key", "value"],
+            },
+            handler=save_memory,
+        ),
+        ToolDefinition(
+            name="load_memory",
+            description="Load a memory value from a given key in persistent local storage. Use this tool to recall information stored earlier.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "Memory key to load.",
+                    },
+                },
+                "required": ["key"],
+            },
+            handler=load_memory,
         ),
     ]
