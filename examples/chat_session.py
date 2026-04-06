@@ -4,6 +4,15 @@ from src.llm.client import LLMClient
 from src.llm.session import ChatSession
 
 
+# Example input cases:
+# What is an AI agent?
+# Explain tool calling with a simple example.
+# Compare memory and session history in one short paragraph.
+# What is the difference between planning and direct execution?
+# Give me a simple roadmap for learning AI Agent development.
+# clear
+# history
+# exit
 def main():
     logging.basicConfig(
         level=logging.INFO,

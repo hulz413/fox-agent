@@ -10,6 +10,11 @@ def decorate_text(text: str) -> str:
     return f"**{text}**"
 
 
+# Example input cases:
+# Remember that this project is for learning AI Agent development. Save it under key project_goal.
+# Remember that I prefer concise answers. Save it under key response_style.
+# Load the memory stored under key project_goal.
+# What do you remember under key response_style?
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -46,16 +51,6 @@ def main() -> None:
             case "exit" | "quit":
                 print("Assistant: Bye~")
                 break
-            case "history":
-                print("=== History ===")
-                for message in session.get_history():
-                    print(f"[{message.role}] {message.content}")
-                print()
-                continue
-            case "clear":
-                session.clear()
-                print("History cleared!")
-                continue
             case _:
                 response = session.chat(user_input)
                 print("Assistant:", response.content)
