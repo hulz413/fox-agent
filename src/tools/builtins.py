@@ -90,6 +90,11 @@ def load_memory(key: str) -> str:
     return memory[key]
 
 
+def list_memory_keys() -> str:
+    memory = _load_memory_store()
+    return "\n".join(memory.keys())
+
+
 def build_builtin_tools() -> list[ToolDefinition]:
     return [
         ToolDefinition(
@@ -184,5 +189,15 @@ def build_builtin_tools() -> list[ToolDefinition]:
                 "required": ["key"],
             },
             handler=load_memory,
+        ),
+        ToolDefinition(
+            name="list_memory_keys",
+            description="List all memory keys stored in persistent local storage.",
+            input_schema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+            handler=list_memory_keys,
         ),
     ]

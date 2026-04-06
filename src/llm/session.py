@@ -2,6 +2,7 @@ import logging
 from src.llm.client import LLMClient
 from src.llm.schemas import Message, LLMResponse, ToolCall
 from src.tools.registry import ToolRegistry
+from src.planning.schemas import Plan, PlanStep
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,21 @@ class ChatSession:
         self.add_user_message(user_input)
         return self._run_loop()
 
+    def chat_with_plan(self, plan: Plan) -> LLMResponse:
+        logger.info(f"Plan execution started with {len(plan.steps)} steps")
+        step_results: list[str] = []
+
+        for step in plan.steps:
+            logger.info(f"Plan step started: [{step.step_id}] {step.description}")
+            response = self._execute_plan_step(plan, step, step_results)
+            step_results.append(f"Step {step.step_id}: {response.content}")
+            logger.info(f"Plan step finished: [{step.step_id}] {response.content}")
+
+        final_input = self._build_final_input(plan, step_results)
+        logger.info("Generating final response from plan execution results")
+        self.add_user_message(final_input)
+        return self._run_loop()
+
     def _run_loop(self) -> LLMResponse:
         for step in range(1, self.max_steps + 1):
             logger.info(f"Step {step}/{self.max_steps} started")
@@ -89,6 +105,43 @@ class ChatSession:
                 self.add_tool_message(result, tool_call.id)
 
         raise ValueError("Max steps reached without a response :(")
+
+    def _execute_plan_step(
+        self, plan: Plan, step: PlanStep, step_results: list[str]
+    ) -> LLMResponse:
+        step_input = self._build_step_input(plan, step, step_results)
+        self.add_user_message(step_input)
+        return self._run_loop()
+
+    def _build_step_input(
+        self, plan: Plan, step: PlanStep, step_results: list[str]
+    ) -> str:
+        completed_results = "\n".join(step_results) if step_results else "None"
+        return (
+            f"Original user request: {plan.original_request}\n\n"
+            f"Current step ({step.step_id}/{len(plan.steps)}): {step.description}\n"
+            f"Requires tools: {step.requires_tools}\n\n"
+            f"Completed step results:\n{completed_results}\n\n"
+            "Complete only the current step. "
+            "Use tools only if the current step requires them. "
+            "Do not work on other steps. "
+            "Return a concise result for this step."
+        )
+
+    def _build_final_input(self, plan: Plan, step_results: list[str]) -> str:
+        plan_lines = [
+            f"{step.step_id}. [{('tool' if step.requires_tools else 'no-tool')}] {step.description}"
+            for step in plan.steps
+        ]
+        rendered_plan = "\n".join(plan_lines)
+        rendered_results = "\n".join(step_results)
+
+        return (
+            f"Original user request: {plan.original_request}\n\n"
+            f"Plan: {rendered_plan}\n\n"
+            f"Plan step results:\n{rendered_results}\n\n"
+            "Base on the executed step results, give the final answer to the user."
+        )
 
     def clear(self) -> None:
         self.messages = [

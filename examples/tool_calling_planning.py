@@ -3,10 +3,10 @@ import logging
 from src.core.config import Config
 from src.llm.client import LLMClient
 from src.llm.session import ChatSession
-from src.tools.builtins import build_builtin_tools
 from src.tools.registry import ToolRegistry
 from src.planning.planner import Planner
 from src.planning.schemas import Plan
+from src.tools.builtins import build_builtin_tools
 
 
 def format_plan(plan: Plan) -> str:
@@ -15,27 +15,6 @@ def format_plan(plan: Plan) -> str:
         tool_hint = "tool" if step.requires_tools else "no-tool"
         lines.append(f"{step.step_id}. [{tool_hint}] {step.description}")
     return "\n".join(lines)
-
-
-def execute_plan(session: ChatSession, plan: Plan) -> list[str]:
-    step_results: list[str] = []
-    total_steps = len(plan.steps)
-
-    for step in plan.steps:
-        completed_results = "\n".join(step_results) if step_results else "None"
-        step_input = (
-            f"Original user request: {plan.original_request}\n\n"
-            f"Current step ({step.step_id}/{total_steps}): {step.description}\n"
-            f"Requires tools: {step.requires_tools}\n\n"
-            f"Completed step results:\n{completed_results}\n\n"
-            "Complete only the current step. "
-            "Use tools only if the current step requires them. "
-            "Return a concise result for this step."
-        )
-        response = session.chat(step_input)
-        step_results.append(f"Step {step.step_id}: {response.content}")
-
-    return step_results
 
 
 # Example input cases:
@@ -84,20 +63,7 @@ def main() -> None:
                     max_steps=20,
                 )
 
-                step_results = execute_plan(session, plan)
-                print("=== Step Results ===")
-                for result in step_results:
-                    print(result)
-                print()
-
-                final_input = (
-                    f"User request: {user_input}\n\n"
-                    f"Plan:\n{format_plan(plan)}\n\n"
-                    f"Step results:\n{'\n'.join(step_results)}\n\n"
-                    "Base on the executed steps, give the final answer to the user."
-                )
-
-                response = session.chat(final_input)
+                response = session.chat_with_plan(plan)
                 print("Assistant:", response.content)
                 print()
 
