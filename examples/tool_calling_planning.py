@@ -2,38 +2,48 @@ import logging
 
 from src.core.config import Config
 from src.llm.client import LLMClient
-from src.llm.schemas import Message
 from src.llm.session import ChatSession
 from src.tools.builtins import build_builtin_tools
 from src.tools.registry import ToolRegistry
+from src.planning.planner import Planner
+from src.planning.schemas import Plan
 
 
-def create_plan(client: LLMClient, user_input: str) -> str:
-    messages = [
-        Message(
-            role="system",
-            content=(
-                "You are a planning assistant for an AI agent. "
-                "Create a short execution plan for the user's request. "
-                "Keep the plan 3-5 concise and numbered steps. "
-                "Do not solve the task, do not call any tools."
-            ),
-        ),
-        Message(
-            role="user",
-            content=user_input,
-        ),
-    ]
+def format_plan(plan: Plan) -> str:
+    lines = ["=== Plan ==="]
+    for step in plan.steps:
+        tool_hint = "tool" if step.requires_tools else "no-tool"
+        lines.append(f"{step.step_id}. [{tool_hint}] {step.description}")
+    return "\n".join(lines)
 
-    response = client.chat(messages)
-    return response.content
+
+def execute_plan(session: ChatSession, plan: Plan) -> list[str]:
+    step_results: list[str] = []
+    total_steps = len(plan.steps)
+
+    for step in plan.steps:
+        completed_results = "\n".join(step_results) if step_results else "None"
+        step_input = (
+            f"Original user request: {plan.original_request}\n\n"
+            f"Current step ({step.step_id}/{total_steps}): {step.description}\n"
+            f"Requires tools: {step.requires_tools}\n\n"
+            f"Completed step results:\n{completed_results}\n\n"
+            "Complete only the current step. "
+            "Use tools only if the current step requires them. "
+            "Return a concise result for this step."
+        )
+        response = session.chat(step_input)
+        step_results.append(f"Step {step.step_id}: {response.content}")
+
+    return step_results
 
 
 # Example input cases:
-# List files in the current directory, then read requirements.txt and summarize the dependencies.
-# Read src/llm/session.py and explain how the agent loop works.
-# List files in src/tools, then read src/tools/builtins.py and summarize the available tools.
-# Remember that this project goal is learning AI Agent development, then tell me what you stored.
+# List files in src/tools, then read builtins.py and summarize the available tools.
+# Read src/llm/session.py, explain how the agent loop works, then summarize it in 3 bullet points.
+# Remember that this project is for learning AI Agent development, then tell me what was stored.
+# Get the current time, save it to a file, then read the file back and summarize the result.
+# Read requirements.txt and explain what dependencies are used in this project.
 def main() -> None:
     logging.basicConfig(
         level=logging.INFO,
@@ -42,6 +52,7 @@ def main() -> None:
 
     config = Config.from_env()
     client = LLMClient(config)
+    planner = Planner(client)
     tool_registry = ToolRegistry()
     for tool in build_builtin_tools():
         tool_registry.register(tool)
@@ -56,28 +67,37 @@ def main() -> None:
                 print("Assistant: Bye~")
                 break
             case _:
-                plan = create_plan(client, user_input)
-                print("=== Plan ===")
-                print(plan)
+                plan = planner.create_plan(user_input)
+                print(format_plan(plan))
                 print()
 
                 session = ChatSession(
                     client,
                     tool_registry,
                     system_prompt=(
-                        "You are a helpful assistant. "
-                        "First follow the provided plan, then complete the user's request. "
-                        "Use tools when needed."
+                        "You are a helpful assistant executing a structured plan. "
+                        "Complete only the current step. "
+                        "Use tools when needed. "
+                        "Do not jump ahead to future steps. "
+                        "Be concise."
                     ),
                     max_steps=20,
                 )
-                execution_input = (
+
+                step_results = execute_plan(session, plan)
+                print("=== Step Results ===")
+                for result in step_results:
+                    print(result)
+                print()
+
+                final_input = (
                     f"User request: {user_input}\n\n"
-                    f"Plan:\n{plan}\n\n"
-                    "Execute the plan step by step and give the final answer."
+                    f"Plan:\n{format_plan(plan)}\n\n"
+                    f"Step results:\n{'\n'.join(step_results)}\n\n"
+                    "Base on the executed steps, give the final answer to the user."
                 )
 
-                response = session.chat(execution_input)
+                response = session.chat(final_input)
                 print("Assistant:", response.content)
                 print()
 
