@@ -26,7 +26,6 @@ def main() -> None:
 
     user_input = "What time is it?"
     response = session.chat(user_input)
-
     print("Assistant: " + response.content)
     print()
 
