@@ -4,7 +4,7 @@ from src.llm.client import LLMClient
 from src.llm.session import ChatSession
 from src.tools.builtins import build_builtin_tools
 from src.tools.registry import ToolRegistry
-from src.memory.json_sotre import JsonMemoryStore
+from src.memory.json_store import JsonMemoryStore
 
 
 def decorate_text(text: str) -> str:
