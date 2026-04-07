@@ -16,5 +16,5 @@ class MemoryStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def list(self, namespace: str | None = None) -> list[MemoryRecord]:
+    def list(self, namespaces: list[str] | None = None) -> list[MemoryRecord]:
         raise NotImplementedError

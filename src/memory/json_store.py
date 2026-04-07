@@ -33,11 +33,13 @@ class JsonMemoryStore(MemoryStore):
             del memory[namespace]
         self._save(memory)
 
-    def list(self, namespace: str | None = None) -> list[MemoryRecord]:
+    def list(self, namespaces: list[str] | None = None) -> list[MemoryRecord]:
         memory = self._load()
-        records: list[MemoryRecord] = []
 
-        namespaces = [namespace] if namespace else sorted(memory.keys())
+        if not namespaces:
+            namespaces = sorted(memory.keys())
+
+        records: list[MemoryRecord] = []
         for namespace in namespaces:
             bucket = memory.get(namespace, {})
             records.extend(
