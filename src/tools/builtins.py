@@ -1,9 +1,8 @@
-import json
 from datetime import datetime
 from pathlib import Path
 from src.tools.schemas import ToolDefinition
-
-MEMORY_STORE_FILE = Path("~/.fox-agent/memory_store.json").expanduser()
+from src.memory.json_sotre import JsonMemoryStore
+from src.memory.store import MemoryStore
 
 
 def get_current_time() -> str:
@@ -55,48 +54,73 @@ def write_file(path: str, content: str) -> str:
     return f"File written successfully: {target}"
 
 
-def _load_memory_store() -> dict[str, str]:
-    if not MEMORY_STORE_FILE.exists():
-        return {}
-    if not MEMORY_STORE_FILE.is_file():
-        raise ValueError(f"Path is not a file: {MEMORY_STORE_FILE}")
-    with MEMORY_STORE_FILE.open("r", encoding="utf-8") as f:
-        memory: dict[str, str] = {}
-        data = json.load(f)
-        if not isinstance(data, dict):
-            raise ValueError(f"Memory store must be a JSON object: {MEMORY_STORE_FILE}")
-        for key, value in data.items():
-            memory[str(key)] = str(value)
-        return memory
+def build_memroy_tools(
+    memory_store: JsonMemoryStore | None = None,
+) -> list[ToolDefinition]:
+    store = memory_store or JsonMemoryStore()
 
+    def save_memory(key: str, value: str) -> str:
+        store.set(key, value)
+        return f"Memory saved successfully: {key}"
 
-def _save_memory_store(memory: dict[str, str]) -> None:
-    MEMORY_STORE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with MEMORY_STORE_FILE.open("w", encoding="utf-8") as f:
-        json.dump(memory, f, ensure_ascii=False, indent=2)
+    def load_memory(key: str) -> str:
+        return store.get(key)
 
+    def list_memory_keys() -> str:
+        return "\n".join(store.list().keys())
 
-def save_memory(key: str, value: str) -> str:
-    memory = _load_memory_store()
-    memory[key] = value
-    _save_memory_store(memory)
-    return f"Memory saved successfully: {key}"
-
-
-def load_memory(key: str) -> str:
-    memory = _load_memory_store()
-    if key not in memory:
-        raise ValueError(f"Memory not found for key {key}")
-    return memory[key]
-
-
-def list_memory_keys() -> str:
-    memory = _load_memory_store()
-    return "\n".join(memory.keys())
-
-
-def build_builtin_tools() -> list[ToolDefinition]:
     return [
+        ToolDefinition(
+            name="save_memory",
+            description="Save a memory value under a given key in persistent local storage.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "Memory key to store.",
+                    },
+                    "value": {
+                        "type": "string",
+                        "description": "Memory value to store.",
+                    },
+                },
+                "required": ["key", "value"],
+            },
+            handler=save_memory,
+        ),
+        ToolDefinition(
+            name="load_memory",
+            description="Load a memory value from a given key in persistent local storage. Use this tool to recall information stored earlier.",
+            input_schema={
+                "type": "object",
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "description": "Memory key to load.",
+                    },
+                },
+                "required": ["key"],
+            },
+            handler=load_memory,
+        ),
+        ToolDefinition(
+            name="list_memory_keys",
+            description="List all memory keys stored in persistent local storage.",
+            input_schema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+            handler=list_memory_keys,
+        ),
+    ]
+
+
+def build_builtin_tools(
+    memory_store: MemoryStore | None = None,
+) -> list[ToolDefinition]:
+    core_tools = [
         ToolDefinition(
             name="get_current_time",
             description="Get the current local time.",
@@ -156,48 +180,6 @@ def build_builtin_tools() -> list[ToolDefinition]:
             },
             handler=write_file,
         ),
-        ToolDefinition(
-            name="save_memory",
-            description="Save a memory value under a given key in persistent local storage.",
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "key": {
-                        "type": "string",
-                        "description": "Memory key to store.",
-                    },
-                    "value": {
-                        "type": "string",
-                        "description": "Memory value to store.",
-                    },
-                },
-                "required": ["key", "value"],
-            },
-            handler=save_memory,
-        ),
-        ToolDefinition(
-            name="load_memory",
-            description="Load a memory value from a given key in persistent local storage. Use this tool to recall information stored earlier.",
-            input_schema={
-                "type": "object",
-                "properties": {
-                    "key": {
-                        "type": "string",
-                        "description": "Memory key to load.",
-                    },
-                },
-                "required": ["key"],
-            },
-            handler=load_memory,
-        ),
-        ToolDefinition(
-            name="list_memory_keys",
-            description="List all memory keys stored in persistent local storage.",
-            input_schema={
-                "type": "object",
-                "properties": {},
-                "required": [],
-            },
-            handler=list_memory_keys,
-        ),
     ]
+
+    return core_tools + build_memroy_tools(memory_store)
