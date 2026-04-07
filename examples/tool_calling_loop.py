@@ -1,3 +1,4 @@
+from src.core.logging import setup_logging
 from src.core.config import Config
 from src.llm.client import LLMClient
 from src.llm.session import ChatSession
@@ -11,6 +12,8 @@ def decorate_text(text: str) -> str:
 
 
 def main() -> None:
+    setup_logging()
+
     config = Config.from_env()
     client = LLMClient(config)
     tool_registry = ToolRegistry()

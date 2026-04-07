@@ -1,4 +1,4 @@
-import logging
+from src.core.logging import setup_logging
 from src.core.config import Config
 from src.llm.client import LLMClient
 from src.llm.session import ChatSession
@@ -14,10 +14,7 @@ from src.llm.session import ChatSession
 # history
 # exit
 def main():
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(asctime)s | %(levelname)s | %(name)s] %(message)s",
-    )
+    setup_logging()
 
     config = Config.from_env()
     client = LLMClient(config)
