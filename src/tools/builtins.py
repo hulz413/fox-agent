@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 from src.tools.schemas import ToolDefinition
-from src.memory.json_sotre import JsonMemoryStore
+from src.memory.json_store import JsonMemoryStore
 from src.memory.store import MemoryStore
 
 
@@ -54,8 +54,8 @@ def write_file(path: str, content: str) -> str:
     return f"File written successfully: {target}"
 
 
-def build_memroy_tools(
-    memory_store: JsonMemoryStore | None = None,
+def build_memory_tools(
+    memory_store: MemoryStore | None = None,
 ) -> list[ToolDefinition]:
     store = memory_store or JsonMemoryStore()
 
@@ -66,8 +66,12 @@ def build_memroy_tools(
     def load_memory(key: str, namespace: str = "default") -> str:
         return store.get(key, namespace)
 
-    def list_memory_keys() -> str:
-        return "\n".join(store.list().keys())
+    def list_memories(namespace: str | None = None) -> str:
+        records = store.list(namespace)
+        if not records:
+            namespace_text = f" in namespace {namespace}" if namespace else ""
+            return f"No memory records found{namespace_text}."
+        return "\n".join([f"[{record.namespace}] {record.key}" for record in records])
 
     return [
         ToolDefinition(
@@ -115,32 +119,25 @@ def build_memroy_tools(
             handler=load_memory,
         ),
         ToolDefinition(
-            name="list_memory_keys",
-            description="List all memory keys stored in persistent local storage.",
+            name="list_memories",
+            description="List all memory records with namespace and key stored in persistent local storage.",
             input_schema={
                 "type": "object",
-                "properties": {},
+                "properties": {
+                    "namespace": {
+                        "type": "string",
+                        "description": "Memory namespace to list. Leave empty to list all namespaces.",
+                    },
+                },
                 "required": [],
             },
-            handler=list_memory_keys,
+            handler=list_memories,
         ),
     ]
 
 
-def build_builtin_tools(
-    memory_store: MemoryStore | None = None,
-) -> list[ToolDefinition]:
-    core_tools = [
-        ToolDefinition(
-            name="get_current_time",
-            description="Get the current local time.",
-            input_schema={
-                "type": "object",
-                "properties": {},
-                "required": [],
-            },
-            handler=get_current_time,
-        ),
+def build_file_tools() -> list[ToolDefinition]:
+    return [
         ToolDefinition(
             name="list_files",
             description="List files and directories in the given directory path.",
@@ -192,4 +189,23 @@ def build_builtin_tools(
         ),
     ]
 
-    return core_tools + build_memroy_tools(memory_store)
+
+def build_core_tools() -> list[ToolDefinition]:
+    return [
+        ToolDefinition(
+            name="get_current_time",
+            description="Get the current local time.",
+            input_schema={
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+            handler=get_current_time,
+        )
+    ]
+
+
+def build_builtin_tools(
+    memory_store: MemoryStore | None = None,
+) -> list[ToolDefinition]:
+    return build_core_tools() + build_file_tools() + build_memory_tools(memory_store)

@@ -6,7 +6,7 @@ from src.tools.registry import ToolRegistry
 from src.planning.planner import Planner
 from src.planning.schemas import Plan, PlanStep
 from src.memory.store import MemoryStore
-from src.memory.json_sotre import JsonMemoryStore
+from src.memory.json_store import JsonMemoryStore
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +185,7 @@ class ChatSession:
 
         return (
             f"Original user request: {plan.original_request}\n\n"
-            f"Plan: {rendered_plan}\n\n"
+            f"Plan:\n{rendered_plan}\n\n"
             f"Plan step results:\n{rendered_results}\n\n"
             "Based on the executed step results, give the final answer to the user."
         )
