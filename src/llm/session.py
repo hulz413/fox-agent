@@ -1,7 +1,9 @@
 import logging
+from typing import Literal
 from src.llm.client import LLMClient
 from src.llm.schemas import Message, LLMResponse, ToolCall
 from src.tools.registry import ToolRegistry
+from src.planning.planner import Planner
 from src.planning.schemas import Plan, PlanStep
 
 logger = logging.getLogger(__name__)
@@ -12,11 +14,13 @@ class ChatSession:
         self,
         client: LLMClient,
         tool_registry: ToolRegistry | None = None,
+        planner: Planner | None = None,
         system_prompt: str | None = None,
         max_steps: int = 10,
     ) -> None:
         self.client = client
         self.tool_registry = tool_registry or ToolRegistry()
+        self.planner = planner or Planner(client)
         self.messages: list[Message] = []
         self.max_steps = max_steps
 
@@ -44,10 +48,29 @@ class ChatSession:
     def get_history(self) -> list[Message]:
         return list(self.messages)
 
-    def chat(self, user_input: str) -> LLMResponse:
+    def chat(
+        self,
+        user_input: str,
+        plan_mode: Literal["auto", "enable", "disable"] = "disable",
+    ) -> LLMResponse:
         logger.info(f"User input: {user_input}")
-        self.add_user_message(user_input)
-        return self._run_loop()
+        logger.info(f"Plan mode: {plan_mode}")
+
+        match plan_mode:
+            case "auto":
+                should_plan = self._should_plan(user_input)
+                logger.info(f"Auto plan decision: {should_plan}")
+                if should_plan:
+                    plan = self.planner.create_plan(user_input)
+                    return self.chat_with_plan(plan)
+                else:
+                    self.add_user_message(user_input)
+                    self._run_loop()
+            case "enable":
+                plan = self.planner.create_plan(user_input)
+                return self.chat_with_plan(plan)
+            case "disable":
+                self.add_user_message(user_input)
 
     def chat_with_plan(self, plan: Plan) -> LLMResponse:
         logger.info(f"Plan execution started with {len(plan.steps)} steps")
@@ -63,6 +86,25 @@ class ChatSession:
         logger.info("Generating final response from plan execution results")
         self.add_user_message(final_input)
         return self._run_loop()
+
+    def _should_plan(self, user_input: str) -> bool:
+        messages = [
+            Message(
+                role="system",
+                content=(
+                    "You are a routing assistant for an AI agent. "
+                    "Decide whether the user's request needs planning before execution. "
+                    "Planning is useful for multi-step tasks, tasks with dependencies, "
+                    "tasks requiring file/tool access across several steps, or tasks that "
+                    "must be broken down before answering. "
+                    "Reply with exactly one word: yes or no."
+                ),
+            ),
+            Message(role="user", content=user_input),
+        ]
+        response = self.client.chat(messages)
+        decision = response.content.strip().lower()
+        return decision == "yes"
 
     def _run_loop(self) -> LLMResponse:
         for step in range(1, self.max_steps + 1):
@@ -140,7 +182,7 @@ class ChatSession:
             f"Original user request: {plan.original_request}\n\n"
             f"Plan: {rendered_plan}\n\n"
             f"Plan step results:\n{rendered_results}\n\n"
-            "Base on the executed step results, give the final answer to the user."
+            "Based on the executed step results, give the final answer to the user."
         )
 
     def clear(self) -> None:

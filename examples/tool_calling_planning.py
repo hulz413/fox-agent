@@ -59,7 +59,7 @@ def main() -> None:
                     max_steps=20,
                 )
 
-                response = session.chat_with_plan(plan)
+                response = session.chat(user_input, plan_mode="auto")
                 print("Assistant:", response.content)
                 print()
 
