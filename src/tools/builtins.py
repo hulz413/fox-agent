@@ -59,12 +59,12 @@ def build_memroy_tools(
 ) -> list[ToolDefinition]:
     store = memory_store or JsonMemoryStore()
 
-    def save_memory(key: str, value: str) -> str:
-        store.set(key, value)
+    def save_memory(key: str, value: str, namespace: str = "default") -> str:
+        store.set(key, value, namespace)
         return f"Memory saved successfully: {key}"
 
-    def load_memory(key: str) -> str:
-        return store.get(key)
+    def load_memory(key: str, namespace: str = "default") -> str:
+        return store.get(key, namespace)
 
     def list_memory_keys() -> str:
         return "\n".join(store.list().keys())
@@ -84,6 +84,11 @@ def build_memroy_tools(
                         "type": "string",
                         "description": "Memory value to store.",
                     },
+                    "namespace": {
+                        "type": "string",
+                        "description": "Memory namespace to store under. Defaults to 'default'.",
+                        "default": "default",
+                    },
                 },
                 "required": ["key", "value"],
             },
@@ -98,6 +103,11 @@ def build_memroy_tools(
                     "key": {
                         "type": "string",
                         "description": "Memory key to load.",
+                    },
+                    "namespace": {
+                        "type": "string",
+                        "description": "Memory namespace to load from. Defaults to 'default'.",
+                        "default": "default",
                     },
                 },
                 "required": ["key"],
