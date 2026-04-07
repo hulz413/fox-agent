@@ -4,6 +4,7 @@ from src.llm.client import LLMClient
 from src.llm.session import ChatSession
 from src.tools.builtins import build_builtin_tools
 from src.tools.registry import ToolRegistry
+from src.memory.json_sotre import JsonMemoryStore
 
 
 def decorate_text(text: str) -> str:
@@ -20,13 +21,15 @@ def main() -> None:
 
     config = Config.from_env()
     client = LLMClient(config)
+    memory_store = JsonMemoryStore()
     tool_registry = ToolRegistry()
-    for tool in build_builtin_tools():
+    for tool in build_builtin_tools(memory_store):
         tool_registry.register(tool)
 
     session = ChatSession(
         client,
         tool_registry,
+        memory_store=memory_store,
         system_prompt=(
             "You are a helpful assistant. Use tools when needed. "
             "When the user explicitly asks you to remember, save or store information, "

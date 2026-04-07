@@ -5,6 +5,8 @@ from src.llm.schemas import Message, LLMResponse, ToolCall
 from src.tools.registry import ToolRegistry
 from src.planning.planner import Planner
 from src.planning.schemas import Plan, PlanStep
+from src.memory.store import MemoryStore
+from src.memory.json_sotre import JsonMemoryStore
 
 logger = logging.getLogger(__name__)
 
@@ -15,12 +17,14 @@ class ChatSession:
         client: LLMClient,
         tool_registry: ToolRegistry | None = None,
         planner: Planner | None = None,
+        memory_store: MemoryStore | None = None,
         system_prompt: str | None = None,
         max_steps: int = 10,
     ) -> None:
         self.client = client
         self.tool_registry = tool_registry or ToolRegistry()
         self.planner = planner or Planner(client)
+        self.memory_store = memory_store or JsonMemoryStore()
         self.messages: list[Message] = []
         self.max_steps = max_steps
 
@@ -65,12 +69,13 @@ class ChatSession:
                     return self.chat_with_plan(plan)
                 else:
                     self.add_user_message(user_input)
-                    self._run_loop()
+                    return self._run_loop()
             case "enable":
                 plan = self.planner.create_plan(user_input)
                 return self.chat_with_plan(plan)
             case "disable":
                 self.add_user_message(user_input)
+                return self._run_loop()
 
     def chat_with_plan(self, plan: Plan) -> LLMResponse:
         logger.info(f"Plan execution started with {len(plan.steps)} steps")
