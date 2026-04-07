@@ -4,17 +4,17 @@ from src.memory.schemas import MemoryRecord
 
 class MemoryStore(ABC):
     @abstractmethod
-    def get(self, key: str) -> str:
+    def get(self, key: str, namespace: str) -> str:
         raise NotImplementedError
 
     @abstractmethod
-    def set(self, key: str, value: str) -> None:
+    def set(self, key: str, value: str, namespace: str) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def delete(self, key: str) -> None:
+    def delete(self, key: str, namespace: str) -> None:
         raise NotImplementedError
 
     @abstractmethod
-    def list(self) -> list[MemoryRecord]:
+    def list(self, namespace: str) -> list[MemoryRecord]:
         raise NotImplementedError

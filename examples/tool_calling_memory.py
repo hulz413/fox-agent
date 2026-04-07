@@ -31,13 +31,10 @@ def main() -> None:
         tool_registry,
         memory_store=memory_store,
         system_prompt=(
-            "You are a helpful assistant. Use tools when needed. "
-            "When the user explicitly asks you to remember, save or store information, "
-            "use the save_memory tool. "
-            "When the user explicitly asks what you remember or asks for previously stored information, "
-            "use the load_memory tool. "
-            "Choose short and stable memory keys, such as project_goal, preferred_language, etc. "
-            "Do not use memory tools when the request does not involve remembering or recalling information."
+            "You are a helpful assistant. "
+            "Use save_memory to remember important user preferences and project facts. "
+            "Store user preferences in the 'user' namespace and project facts in the 'project' namespace. "
+            "Use load_memory with the correct namespace when the user asks what you remember."
         ),
         max_steps=10,
     )
