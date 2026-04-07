@@ -7,6 +7,7 @@ from src.planning.planner import Planner
 from src.planning.schemas import Plan, PlanStep
 from src.memory.store import MemoryStore
 from src.memory.json_store import JsonMemoryStore
+from src.memory.retrieval import MemoryRetriever
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,10 @@ class ChatSession:
         self.tool_registry = tool_registry or ToolRegistry()
         self.planner = planner or Planner(client)
         self.memory_store = memory_store or JsonMemoryStore()
+        self.memory_retriever = MemoryRetriever(self.memory_store)
         self.messages: list[Message] = []
         self.max_steps = max_steps
+        self._last_memory_context: str | None = None
 
         if system_prompt:
             self.add_system_message(system_prompt)
@@ -56,9 +59,16 @@ class ChatSession:
         self,
         user_input: str,
         plan_mode: Literal["auto", "enable", "disable"] = "disable",
+        memory_mode: Literal["auto", "disable"] = "disable",
     ) -> LLMResponse:
         logger.info(f"User input: {user_input}")
         logger.info(f"Plan mode: {plan_mode}")
+        logger.info(f"Memory mode: {memory_mode}")
+
+        if memory_mode == "auto":
+            self._inject_memory_context(
+                namespaces=self._resolve_memory_namespaces(plan_mode), max_records=8
+            )
 
         match plan_mode:
             case "auto":
@@ -91,6 +101,33 @@ class ChatSession:
         logger.info("Generating final response from plan execution results")
         self.add_user_message(final_input)
         return self._run_loop()
+
+    def _resolve_memory_namespaces(
+        self, plan_mode: Literal["auto", "enable", "disable"]
+    ) -> list[str]:
+        match plan_mode:
+            case "auto" | "enable":
+                return ["user", "project"]
+            case "disable":
+                return ["user"]
+
+    def _inject_memory_context(
+        self, namespaces: list[str] | None = None, max_records: int = 10
+    ) -> None:
+        context = self.memory_retriever.build_context(
+            namespaces=namespaces, max_records=max_records
+        )
+        if not context:
+            logger.info("No relevant memory context retrieved")
+            return
+
+        if self._last_memory_context == context:
+            logger.info("Memory context unchanged, skipping injection")
+            return
+
+        logger.info(f"Injecting retrieved memory into session context: {context}")
+        self.add_system_message(context)
+        self._last_memory_context = context
 
     def _should_plan(self, user_input: str) -> bool:
         messages = [
@@ -194,4 +231,5 @@ class ChatSession:
         self.messages = [
             message for message in self.messages if message.role == "system"
         ]
+        self._last_memory_context = None
         logger.info("Session cleared, system message preserved")

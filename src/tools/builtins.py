@@ -59,18 +59,18 @@ def build_memory_tools(
 ) -> list[ToolDefinition]:
     store = memory_store or JsonMemoryStore()
 
-    def save_memory(key: str, value: str, namespace: str = "default") -> str:
+    def save(key: str, value: str, namespace: str = "default") -> str:
         store.set(key, value, namespace)
         return f"Memory saved successfully: {key}"
 
-    def load_memory(key: str, namespace: str = "default") -> str:
+    def load(key: str, namespace: str = "default") -> str:
         return store.get(key, namespace)
 
-    def list_memories(namespace: str | None = None) -> str:
-        records = store.list(namespace)
+    def list(namespaces: list[str] | None = None) -> str:
+        records = store.list(namespaces)
         if not records:
-            namespace_text = f" in namespace {namespace}" if namespace else ""
-            return f"No memory records found{namespace_text}."
+            additional_text = f" in namespaces {namespaces}" if namespaces else ""
+            return f"No memory records found{additional_text}."
         return "\n".join([f"[{record.namespace}] {record.key}" for record in records])
 
     return [
@@ -96,7 +96,7 @@ def build_memory_tools(
                 },
                 "required": ["key", "value"],
             },
-            handler=save_memory,
+            handler=save,
         ),
         ToolDefinition(
             name="load_memory",
@@ -116,22 +116,22 @@ def build_memory_tools(
                 },
                 "required": ["key"],
             },
-            handler=load_memory,
+            handler=load,
         ),
         ToolDefinition(
-            name="list_memories",
+            name="list",
             description="List all memory records with namespace and key stored in persistent local storage.",
             input_schema={
                 "type": "object",
                 "properties": {
                     "namespace": {
                         "type": "string",
-                        "description": "Memory namespace to list. Leave empty to list all namespaces.",
+                        "description": "Memory namespaces to list. Leave empty to list all namespaces.",
                     },
                 },
                 "required": [],
             },
-            handler=list_memories,
+            handler=list,
         ),
     ]
 

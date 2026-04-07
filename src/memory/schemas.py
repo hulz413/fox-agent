@@ -1,8 +1,9 @@
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True)
 class MemoryRecord:
-    namespace: str
+    namespace: Literal["default", "user", "project"]
     key: str
     value: str

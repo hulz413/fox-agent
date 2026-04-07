@@ -12,10 +12,10 @@ def decorate_text(text: str) -> str:
 
 
 # Example input cases:
-# Remember that this project is for learning AI Agent development. Save it under key project_goal.
-# Remember that I prefer concise answers. Save it under key response_style.
-# Load the memory stored under key project_goal.
-# What do you remember under key response_style?
+# Remember that this project is for learning AI Agent development. Save it in the project namespace under key project_goal.
+# Remember that I prefer concise answers. Save it in the user namespace under key response_style.
+# Load the memory stored in the project namespace under key project_goal.
+# What do you remember in the user namespace, under key response_style?
 def main() -> None:
     setup_logging()
 
@@ -49,7 +49,7 @@ def main() -> None:
                 print("Assistant: Bye~")
                 break
             case _:
-                response = session.chat(user_input)
+                response = session.chat(user_input, memory_mode="auto")
                 print("Assistant:", response.content)
                 print()
 
