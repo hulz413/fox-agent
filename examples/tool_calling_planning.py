@@ -1,5 +1,4 @@
-import logging
-
+from src.core.logging import setup_logging
 from src.core.config import Config
 from src.llm.client import LLMClient
 from src.llm.session import ChatSession
@@ -21,13 +20,10 @@ def format_plan(plan: Plan) -> str:
 # List files in src/tools, then read builtins.py and summarize the available tools.
 # Read src/llm/session.py, explain how the agent loop works, then summarize it in 3 bullet points.
 # Remember that this project is for learning AI Agent development, then tell me what was stored.
-# Get the current time, save it to a file, then read the file back and summarize the result.
+# Get the current time, save it to a file at /tmp/current.txt, then read the file back and summarize the result.
 # Read requirements.txt and explain what dependencies are used in this project.
 def main() -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(asctime)s | %(levelname)s | %(name)s] %(message)s",
-    )
+    setup_logging()
 
     config = Config.from_env()
     client = LLMClient(config)
