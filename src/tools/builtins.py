@@ -59,14 +59,14 @@ def build_memory_tools(
 ) -> list[ToolDefinition]:
     store = memory_store or JsonMemoryStore()
 
-    def save(key: str, value: str, namespace: str = "default") -> str:
+    def save_memory(key: str, value: str, namespace: str = "default") -> str:
         store.set(key, value, namespace)
         return f"Memory saved successfully: {key}"
 
-    def load(key: str, namespace: str = "default") -> str:
+    def load_memory(key: str, namespace: str = "default") -> str:
         return store.get(key, namespace)
 
-    def list(namespaces: list[str] | None = None) -> str:
+    def list_memories(namespaces: list[str] | None = None) -> str:
         records = store.list(namespaces)
         if not records:
             additional_text = f" in namespaces {namespaces}" if namespaces else ""
@@ -96,7 +96,7 @@ def build_memory_tools(
                 },
                 "required": ["key", "value"],
             },
-            handler=save,
+            handler=save_memory,
         ),
         ToolDefinition(
             name="load_memory",
@@ -116,10 +116,10 @@ def build_memory_tools(
                 },
                 "required": ["key"],
             },
-            handler=load,
+            handler=load_memory,
         ),
         ToolDefinition(
-            name="list",
+            name="list_memories",
             description="List all memory records with namespace and key stored in persistent local storage.",
             input_schema={
                 "type": "object",
@@ -131,7 +131,7 @@ def build_memory_tools(
                 },
                 "required": [],
             },
-            handler=list,
+            handler=list_memories,
         ),
     ]
 

@@ -4,7 +4,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class ToolPolicy:
-    allowed_roots: list[str] = field(default_factory=lambda: [":"])
+    allowed_roots: list[str] = field(default_factory=lambda: ["."])
     allow_file_write: bool = False
 
     def resolve_allowed_roots(self) -> list[Path]:

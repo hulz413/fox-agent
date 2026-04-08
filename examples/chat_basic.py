@@ -1,20 +1,13 @@
 from src.core.logging import setup_logging
-from src.core.config import Config
-from src.llm.client import LLMClient
-from src.llm.schemas import Message
+from src.agent import AgentConfig, Agent
 
 
 def main():
     setup_logging()
 
-    config = Config.from_env()
-    client = LLMClient(config)
-    messages = [
-        Message(role="system", content="You are a helpful AI assistant."),
-        Message(role="user", content="Please introduce AI Agent in one sentence."),
-    ]
-
-    response = client.chat(messages)
+    config = AgentConfig.from_env()
+    agent = Agent(config)
+    response = agent.run("Please introduce AI Agent in one sentence.")
 
     print("=== Assistant ===")
     print(response.content)

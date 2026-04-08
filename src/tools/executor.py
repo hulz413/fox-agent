@@ -9,7 +9,7 @@ class ToolExecutor:
     FILE_TOOLS = {"list_files", "read_file", "write_file"}
 
     def __init__(self, policy: ToolPolicy | None = None) -> None:
-        self.policy = policy
+        self.policy = policy or ToolPolicy()
 
     def execute(
         self, tool: ToolDefinition, args: dict[str, object]
