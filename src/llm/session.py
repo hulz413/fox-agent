@@ -4,6 +4,8 @@ from src.llm.client import LLMClient
 from src.llm.schemas import Message, LLMResponse, ToolCall
 from src.llm.session_config import SessionConfig
 from src.tools.registry import ToolRegistry
+from src.tools.executor import ToolExecutor
+from src.tools.policy import ToolPolicy
 from src.planning.planner import Planner
 from src.planning.schemas import Plan, PlanStep
 from src.memory.store import MemoryStore
@@ -21,6 +23,7 @@ class ChatSession:
         planner: Planner | None = None,
         memory_store: MemoryStore | None = None,
         config: SessionConfig | None = None,
+        tool_policy: ToolPolicy | None = None,
         system_prompt: str | None = None,
     ) -> None:
         self.client = client
@@ -29,6 +32,8 @@ class ChatSession:
         self.memory_store = memory_store or JsonMemoryStore()
         self.memory_retriever = MemoryRetriever(self.memory_store)
         self.config = config or SessionConfig()
+        self.tool_policy = tool_policy or ToolPolicy()
+        self.tool_executor = ToolExecutor(self.tool_policy)
         self.messages: list[Message] = []
         self.max_steps = self.config.max_steps
         self._last_memory_context: str | None = None
@@ -67,7 +72,7 @@ class ChatSession:
 
         if self.config.memory_mode == "auto":
             self._inject_memory_context(
-                namespaces=self.config.resolved_memory_namespaces(),
+                namespaces=self.config.resolve_memory_namespaces(),
                 max_records=self.config.max_memory_records,
             )
 
@@ -174,13 +179,16 @@ class ChatSession:
                 )
                 tool = self.tool_registry.get(tool_call.name)
 
-                try:
-                    result = tool.handler(**tool_call.arguments)
-                    logger.info(f"Tool calling {tool_call.name} result: {result}")
-                except Exception as e:
-                    logger.exception(f"Tool calling {tool_call.name} failed")
-                    result = f"Tool call {tool_call.name} failed: {str(e)}"
-                self.add_tool_message(result, tool_call.id)
+                result = self.tool_executor.execute(tool, tool_call.arguments)
+                if result.success:
+                    logger.info(
+                        f"Tool calling {tool_call.name} result: {result.content}"
+                    )
+                else:
+                    logger.error(
+                        f"Tool calling {tool_call.name} failed: {result.error}"
+                    )
+                self.add_tool_message(result.to_message(tool_call.name), tool_call.id)
 
         raise ValueError("Max steps reached without a response :(")
 

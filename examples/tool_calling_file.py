@@ -4,6 +4,7 @@ from src.llm.client import LLMClient
 from src.llm.session import ChatSession
 from src.tools.builtins import build_builtin_tools
 from src.tools.registry import ToolRegistry
+from src.tools.policy import ToolPolicy
 
 
 def decorate_text(text: str) -> str:
@@ -19,17 +20,22 @@ def main() -> None:
     for tool in build_builtin_tools():
         tool_registry.register(tool)
 
+    tool_policy = ToolPolicy(
+        allowed_roots=[".", "/tmp"],
+        allow_file_write=True,
+    )
+
     session = ChatSession(
         client,
         tool_registry,
+        tool_policy=tool_policy,
         system_prompt=("You are a helpful assistant. Use tools when needed."),
-        max_steps=10,
     )
 
     user_input = (
         "List files in the current directory, "
-        "then write 'Hello, Fox Agent!' to /tmp/hello.txt, "
-        "then read src/tools/builtins.py and summarize what tools are available."
+        "then write 'Hello, Fox Agent!' to .tmp/hello.txt, "
+        "then read src/tools/executor.py and summarize what it does."
     )
     response = session.chat(user_input)
     print("Assistant: " + response.content)
