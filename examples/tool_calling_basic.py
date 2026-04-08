@@ -1,28 +1,17 @@
+from dataclasses import replace
 from src.core.logging import setup_logging
-from src.core.config import Config
-from src.llm.client import LLMClient
-from src.llm.session import ChatSession
-from src.tools.builtins import build_builtin_tools
-from src.tools.registry import ToolRegistry
+from src.agent import AgentConfig, Agent
 
 
 def main() -> None:
     setup_logging()
 
-    config = Config.from_env()
-    client = LLMClient(config)
-    tool_registry = ToolRegistry()
-    for tool in build_builtin_tools():
-        tool_registry.register(tool)
-
-    session = ChatSession(
-        client,
-        tool_registry,
-        system_prompt=("You are a helpful assistant. Use tools when needed."),
+    config = AgentConfig.from_env()
+    config = replace(
+        config, system_prompt="You are a helpful assistant. Use tools when needed."
     )
-
-    user_input = "What time is it?"
-    response = session.chat(user_input)
+    agent = Agent(config)
+    response = agent.run("What time is it?")
     print("Assistant: " + response.content)
     print()
 

@@ -1,7 +1,6 @@
+from dataclasses import replace
 from src.core.logging import setup_logging
-from src.core.config import Config
-from src.llm.client import LLMClient
-from src.llm.session import ChatSession
+from src.agent import AgentConfig, Agent
 
 
 # Example input cases:
@@ -16,13 +15,9 @@ from src.llm.session import ChatSession
 def main():
     setup_logging()
 
-    config = Config.from_env()
-    client = LLMClient(config)
-
-    session = ChatSession(
-        client=client,
-        system_prompt="You are a helpful assistant.",
-    )
+    config = AgentConfig.from_env()
+    config = replace(config, system_prompt="You are a helpful assistant.")
+    agent = Agent(config)
 
     while True:
         user_input = input("You: ").strip()
@@ -35,16 +30,16 @@ def main():
                 break
             case "history":
                 print("=== History ===")
-                for message in session.get_history():
+                for message in agent.get_history():
                     print(f"[{message.role}] {message.content}")
                 print()
                 continue
             case "clear":
-                session.clear()
+                agent.clear()
                 print("History cleared!")
                 continue
             case _:
-                response = session.chat(user_input)
+                response = agent.run(user_input)
                 print("Assistant:", response.content)
                 print()
 

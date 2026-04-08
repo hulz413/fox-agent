@@ -4,7 +4,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class ToolExecutionResult:
     success: bool
-    content: str
+    content: str = ""
     error: str | None = None
 
     def to_message(self, tool_name: str) -> str:

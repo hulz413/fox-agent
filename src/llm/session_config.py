@@ -15,8 +15,6 @@ class SessionConfig:
     planned_memory_namespaces: list[str] = field(
         default_factory=lambda: ["user", "project"]
     )
-    allowed_roots: list[str] = field(default_factory=lambda: ["."])
-    allow_file_write: bool = False
 
     def resolve_memory_namespaces(self) -> list[str]:
         match self.plan_mode:
@@ -25,4 +23,4 @@ class SessionConfig:
             case "disable":
                 return self.direct_memory_namespaces
             case _:
-                logger.error(f"Unknown plan mode: {self.plan_mode}")
+                raise ValueError(f"Unknown plan mode: {self.plan_mode}")

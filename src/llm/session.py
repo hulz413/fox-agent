@@ -20,10 +20,10 @@ class ChatSession:
         self,
         client: LLMClient,
         tool_registry: ToolRegistry | None = None,
+        tool_policy: ToolPolicy | None = None,
         planner: Planner | None = None,
         memory_store: MemoryStore | None = None,
         config: SessionConfig | None = None,
-        tool_policy: ToolPolicy | None = None,
         system_prompt: str | None = None,
     ) -> None:
         self.client = client
@@ -65,18 +65,23 @@ class ChatSession:
     def chat(
         self,
         user_input: str,
+        plan_mode: Literal["auto", "enable", "disable"] | None = None,
+        memory_mode: Literal["auto", "disable"] | None = None,
     ) -> LLMResponse:
-        logger.info(f"User input: {user_input}")
-        logger.info(f"Plan mode: {self.config.plan_mode}")
-        logger.info(f"Memory mode: {self.config.memory_mode}")
+        plan_mode = plan_mode or self.config.plan_mode
+        memory_mode = memory_mode or self.config.memory_mode
 
-        if self.config.memory_mode == "auto":
+        logger.info(f"User input: {user_input}")
+        logger.info(f"Plan mode: {plan_mode}")
+        logger.info(f"Memory mode: {memory_mode}")
+
+        if memory_mode == "auto":
             self._inject_memory_context(
                 namespaces=self.config.resolve_memory_namespaces(),
                 max_records=self.config.max_memory_records,
             )
 
-        match self.config.plan_mode:
+        match plan_mode:
             case "auto":
                 should_plan = self._should_plan(user_input)
                 logger.info(f"Auto plan decision: {should_plan}")
@@ -93,7 +98,7 @@ class ChatSession:
                 self.add_user_message(user_input)
                 return self._run_loop()
             case _:
-                logger.error(f"Unknown plan mode: {self.config.plan_mode}")
+                raise ValueError(f"Unknown plan mode: {plan_mode}")
 
     def chat_with_plan(self, plan: Plan) -> LLMResponse:
         logger.info(f"Plan execution started with {len(plan.steps)} steps")
