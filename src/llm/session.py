@@ -2,6 +2,7 @@ import logging
 from typing import Literal
 from src.llm.client import LLMClient
 from src.llm.schemas import Message, LLMResponse, ToolCall
+from src.llm.session_config import SessionConfig
 from src.tools.registry import ToolRegistry
 from src.planning.planner import Planner
 from src.planning.schemas import Plan, PlanStep
@@ -19,16 +20,17 @@ class ChatSession:
         tool_registry: ToolRegistry | None = None,
         planner: Planner | None = None,
         memory_store: MemoryStore | None = None,
+        config: SessionConfig | None = None,
         system_prompt: str | None = None,
-        max_steps: int = 10,
     ) -> None:
         self.client = client
         self.tool_registry = tool_registry or ToolRegistry()
         self.planner = planner or Planner(client)
         self.memory_store = memory_store or JsonMemoryStore()
         self.memory_retriever = MemoryRetriever(self.memory_store)
+        self.config = config or SessionConfig()
         self.messages: list[Message] = []
-        self.max_steps = max_steps
+        self.max_steps = self.config.max_steps
         self._last_memory_context: str | None = None
 
         if system_prompt:
@@ -58,19 +60,18 @@ class ChatSession:
     def chat(
         self,
         user_input: str,
-        plan_mode: Literal["auto", "enable", "disable"] = "disable",
-        memory_mode: Literal["auto", "disable"] = "disable",
     ) -> LLMResponse:
         logger.info(f"User input: {user_input}")
-        logger.info(f"Plan mode: {plan_mode}")
-        logger.info(f"Memory mode: {memory_mode}")
+        logger.info(f"Plan mode: {self.config.plan_mode}")
+        logger.info(f"Memory mode: {self.config.memory_mode}")
 
-        if memory_mode == "auto":
+        if self.config.memory_mode == "auto":
             self._inject_memory_context(
-                namespaces=self._resolve_memory_namespaces(plan_mode), max_records=8
+                namespaces=self.config.resolved_memory_namespaces(),
+                max_records=self.config.max_memory_records,
             )
 
-        match plan_mode:
+        match self.config.plan_mode:
             case "auto":
                 should_plan = self._should_plan(user_input)
                 logger.info(f"Auto plan decision: {should_plan}")
@@ -86,6 +87,8 @@ class ChatSession:
             case "disable":
                 self.add_user_message(user_input)
                 return self._run_loop()
+            case _:
+                logger.error(f"Unknown plan mode: {self.config.plan_mode}")
 
     def chat_with_plan(self, plan: Plan) -> LLMResponse:
         logger.info(f"Plan execution started with {len(plan.steps)} steps")
@@ -102,15 +105,6 @@ class ChatSession:
         self.add_user_message(final_input)
         return self._run_loop()
 
-    def _resolve_memory_namespaces(
-        self, plan_mode: Literal["auto", "enable", "disable"]
-    ) -> list[str]:
-        match plan_mode:
-            case "auto" | "enable":
-                return ["user", "project"]
-            case "disable":
-                return ["user"]
-
     def _inject_memory_context(
         self, namespaces: list[str] | None = None, max_records: int = 10
     ) -> None:
@@ -125,7 +119,7 @@ class ChatSession:
             logger.info("Memory context unchanged, skipping injection")
             return
 
-        logger.info(f"Injecting retrieved memory into session context: {context}")
+        logger.info("Injecting retrieved memory into session context")
         self.add_system_message(context)
         self._last_memory_context = context
 
