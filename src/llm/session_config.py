@@ -15,8 +15,10 @@ class SessionConfig:
     planned_memory_namespaces: list[str] = field(
         default_factory=lambda: ["user", "project"]
     )
+    allowed_roots: list[str] = field(default_factory=lambda: ["."])
+    allow_file_write: bool = False
 
-    def resolved_memory_namespaces(self) -> list[str]:
+    def resolve_memory_namespaces(self) -> list[str]:
         match self.plan_mode:
             case "auto" | "enable":
                 return self.planned_memory_namespaces
