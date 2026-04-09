@@ -7,3 +7,4 @@ CLAUDE.md
 .vscode/*
 !.vscode/launch.json
 .tmp/
+*.egg-info/
