@@ -16,17 +16,17 @@ class Config:
     def from_env(cls) -> Config:
         load_dotenv()
 
-        api_key = os.getenv("DEEPSEEK_API_KEY").strip()
+        api_key = os.getenv("OPENAI_API_KEY").strip()
         if not api_key:
-            raise ValueError("DEEPSEEK_API_KEY is required")
-        base_url = os.getenv("DEEPSEEK_BASE_URL").strip()
+            raise ValueError("OPENAI_API_KEY is required")
+        base_url = os.getenv("OPENAI_BASE_URL").strip()
         if not base_url:
-            raise ValueError("DEEPSEEK_BASE_URL is required")
-        model = os.getenv("DEEPSEEK_MODEL").strip()
+            raise ValueError("OPENAI_BASE_URL is required")
+        model = os.getenv("OPENAI_MODEL").strip()
         if not model:
-            raise ValueError("DEEPSEEK_MODEL is required")
-        timeout = float(os.getenv("DEEPSEEK_TIMEOUT", "60.0").strip())
-        temperature = float(os.getenv("DEEPSEEK_TEMPERATURE", "0.7").strip())
+            raise ValueError("OPENAI_MODEL is required")
+        timeout = float(os.getenv("OPENAI_TIMEOUT", "60.0").strip())
+        temperature = float(os.getenv("OPENAI_TEMPERATURE", "0.7").strip())
 
         return cls(
             api_key=api_key,

@@ -13,9 +13,9 @@ pip install -e .
 2. Create a .env file with the following variables
 
 ```env
-DEEPSEEK_API_KEY=your_api_key
-DEEPSEEK_BASE_URL=your_base_url
-DEEPSEEK_MODEL=your_model
+OPENAI_API_KEY=your_api_key
+OPENAI_BASE_URL=your_base_url
+OPENAI_MODEL=your_model
 ```
 
 3. Run interactive chat
