@@ -27,6 +27,11 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["auto", "disable"],
         help="Enable memory mode.",
     )
+    parser.add_argument(
+        "--retrieval-mode",
+        choices=["auto", "disable"],
+        help="Enable retrieval mode.",
+    )
     return parser
 
 
@@ -34,6 +39,7 @@ def run_interactive(
     agent: Agent,
     plan_mode: str,
     memory_mode: str,
+    retrieval_mode: str,
 ) -> None:
     while True:
         try:
@@ -60,7 +66,12 @@ def run_interactive(
                 print("History cleared!")
                 continue
             case _:
-                response = agent.run(user_input, plan_mode, memory_mode)
+                response = agent.run(
+                    user_input,
+                    plan_mode,
+                    memory_mode,
+                    retrieval_mode,
+                )
                 print("Assistant:", response.content)
                 print()
 
@@ -70,8 +81,14 @@ def run_once(
     prompt: str,
     plan_mode: str,
     memory_mode: str,
+    retrieval_mode: str,
 ) -> None:
-    response = agent.run(prompt, plan_mode, memory_mode)
+    response = agent.run(
+        prompt,
+        plan_mode,
+        memory_mode,
+        retrieval_mode,
+    )
     print(response.content)
 
 
@@ -88,8 +105,10 @@ def main() -> None:
         prompt = args.prompt
         if piped_input:
             prompt = f"{prompt}\n\nInput from stdin:\n{piped_input}"
-        run_once(agent, prompt, args.plan_mode, args.memory_mode)
+        run_once(agent, prompt, args.plan_mode, args.memory_mode, args.retrieval_mode)
     elif piped_input:
-        run_once(agent, piped_input, args.plan_mode, args.memory_mode)
+        run_once(
+            agent, piped_input, args.plan_mode, args.memory_mode, args.retrieval_mode
+        )
     else:
-        run_interactive(agent, args.plan_mode, args.memory_mode)
+        run_interactive(agent, args.plan_mode, args.memory_mode, args.retrieval_mode)

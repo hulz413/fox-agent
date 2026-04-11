@@ -19,13 +19,18 @@ class AgentConfig:
 
     plan_mode: Literal["auto", "enable", "disable"] = "disable"
     memory_mode: Literal["auto", "disable"] = "disable"
+    retrieval_mode: Literal["auto", "disable"] = "disable"
     max_steps: int = 10
     max_memory_records: int = 8
+    retrieval_top_k: int = 5
+    chunk_size: int = 1000
+    chunk_overlap: int = 200
     direct_memory_namespaces: list[str] = field(default_factory=lambda: ["user"])
     planned_memory_namespaces: list[str] = field(
         default_factory=lambda: ["user", "project"]
     )
     memory_store_path: str = "~/.fox-agent/memory_store.json"
+    knowledge_base_path: str | None = None
     allowed_roots: list[str] = field(default_factory=lambda: ["."])
     allow_file_write: bool = False
     system_prompt: str | None = None
@@ -42,12 +47,19 @@ class AgentConfig:
             temperature=llm_config.temperature,
             plan_mode=os.getenv("FOX_AGENT_PLAN_MODE", "disable").strip(),
             memory_mode=os.getenv("FOX_AGENT_MEMORY_MODE", "disable").strip(),
+            retrieval_mode=os.getenv("FOX_AGENT_RETRIEVAL_MODE", "disable").strip(),
             max_steps=int(os.getenv("FOX_AGENT_MAX_STEPS", "10").strip()),
             max_memory_records=int(
                 os.getenv("FOX_AGENT_MAX_MEMORY_RECORDS", "8").strip()
             ),
+            retrieval_top_k=int(os.getenv("FOX_AGENT_RETRIEVAL_TOP_K", "5").strip()),
+            chunk_size=int(os.getenv("FOX_AGENT_CHUNK_SIZE", "1000").strip()),
+            chunk_overlap=int(os.getenv("FOX_AGENT_CHUNK_OVERLAP", "200").strip()),
             memory_store_path=os.getenv(
                 "FOX_AGENT_MEMORY_STORE_PATH", "~/.fox-agent/memory_store.json"
+            ).strip(),
+            knowledge_base_path=os.getenv(
+                "FOX_AGENT_KNOWLEDGE_BASE_PATH", "~/.fox-agent/docs"
             ).strip(),
             allowed_roots=[
                 item.strip()
@@ -74,8 +86,10 @@ class AgentConfig:
         return SessionConfig(
             plan_mode=self.plan_mode,
             memory_mode=self.memory_mode,
+            retrieval_mode=self.retrieval_mode,
             max_steps=self.max_steps,
             max_memory_records=self.max_memory_records,
+            retrieval_top_k=self.retrieval_top_k,
             direct_memory_namespaces=list(self.direct_memory_namespaces),
             planned_memory_namespaces=list(self.planned_memory_namespaces),
         )

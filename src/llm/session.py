@@ -10,7 +10,8 @@ from src.planning.planner import Planner
 from src.planning.schemas import Plan, PlanStep
 from src.memory.store import MemoryStore
 from src.memory.json_store import JsonMemoryStore
-from src.memory.retrieval import MemoryRetriever
+from src.memory.retriever import MemoryRetriever
+from src.knowledge.retriever import KnowledgeRetriever
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +24,7 @@ class ChatSession:
         tool_policy: ToolPolicy | None = None,
         planner: Planner | None = None,
         memory_store: MemoryStore | None = None,
+        knowledge_retriever: KnowledgeRetriever | None = None,
         config: SessionConfig | None = None,
         system_prompt: str | None = None,
     ) -> None:
@@ -31,12 +33,14 @@ class ChatSession:
         self.planner = planner or Planner(client)
         self.memory_store = memory_store or JsonMemoryStore()
         self.memory_retriever = MemoryRetriever(self.memory_store)
+        self.knowledge_retriever = knowledge_retriever
         self.config = config or SessionConfig()
         self.tool_policy = tool_policy or ToolPolicy()
         self.tool_executor = ToolExecutor(self.tool_policy)
         self.messages: list[Message] = []
         self.max_steps = self.config.max_steps
         self._last_memory_context: str | None = None
+        self._last_knowledge_context: str | None = None
 
         if system_prompt:
             self.add_system_message(system_prompt)
@@ -67,18 +71,27 @@ class ChatSession:
         user_input: str,
         plan_mode: Literal["auto", "enable", "disable"] | None = None,
         memory_mode: Literal["auto", "disable"] | None = None,
+        retrieval_mode: Literal["auto", "disable"] | None = None,
     ) -> LLMResponse:
         plan_mode = plan_mode or self.config.plan_mode
         memory_mode = memory_mode or self.config.memory_mode
+        retrieval_mode = retrieval_mode or self.config.retrieval_mode
 
         logger.info(f"User input: {user_input}")
         logger.info(f"Plan mode: {plan_mode}")
         logger.info(f"Memory mode: {memory_mode}")
+        logger.info(f"Retrieval mode: {retrieval_mode}")
 
         if memory_mode == "auto":
             self._inject_memory_context(
                 namespaces=self.config.resolve_memory_namespaces(),
                 max_records=self.config.max_memory_records,
+            )
+
+        if retrieval_mode == "auto":
+            self._inject_knowledge_context(
+                user_input=user_input,
+                top_k=self.config.retrieval_top_k,
             )
 
         match plan_mode:
@@ -132,6 +145,25 @@ class ChatSession:
         logger.info("Injecting retrieved memory into session context")
         self.add_system_message(context)
         self._last_memory_context = context
+
+    def _inject_knowledge_context(self, user_input: str, top_k: int = 5) -> None:
+        if not self.knowledge_retriever:
+            logger.info("Knowledge retriever not configured")
+            return
+
+        retrieved = self.knowledge_retriever.retrieve(user_input, top_k)
+        context = self.knowledge_retriever.render(retrieved)
+        if not context:
+            logger.info("No relevant knowledge context retrieved")
+            return
+
+        if self._last_knowledge_context == context:
+            logger.info("Knowledge context unchanged, skipping injection")
+            return
+
+        logger.info("Injecting retrieved knowledge into session context")
+        self.add_system_message(context)
+        self._last_knowledge_context = context
 
     def _should_plan(self, user_input: str) -> bool:
         messages = [
@@ -239,4 +271,5 @@ class ChatSession:
             message for message in self.messages if message.role == "system"
         ]
         self._last_memory_context = None
+        self._last_knowledge_context = None
         logger.info("Session cleared, system message preserved")

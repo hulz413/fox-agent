@@ -5,11 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: Current File",
+            "name": "Python Debugger: fox-agent",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "program": "src",
+            "args": [
+                "-p",
+                "'Summarize the project architecture'",
+                "--retrieval-mode",
+                "auto"
+            ],
             "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             },
