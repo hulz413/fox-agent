@@ -31,6 +31,7 @@ class AgentConfig:
     )
     memory_store_path: str = "~/.fox-agent/memory_store.json"
     knowledge_base_path: str | None = None
+    knowledge_index_path: str = "~/.fox-agent/knowledge_index.json"
     allowed_roots: list[str] = field(default_factory=lambda: ["."])
     allow_file_write: bool = False
     system_prompt: str | None = None
@@ -60,6 +61,9 @@ class AgentConfig:
             ).strip(),
             knowledge_base_path=os.getenv(
                 "FOX_AGENT_KNOWLEDGE_BASE_PATH", "~/.fox-agent/docs"
+            ).strip(),
+            knowledge_index_path=os.getenv(
+                "FOX_AGENT_KNOWLEDGE_INDEX_PATH", "~/.fox-agent/knowledge_index.json"
             ).strip(),
             allowed_roots=[
                 item.strip()

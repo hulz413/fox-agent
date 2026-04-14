@@ -23,6 +23,12 @@ class LocalVectorStore(VectorStore):
         ]
         return sorted(scored, key=lambda x: x.score, reverse=True)[:top_k]
 
+    def save(self) -> None:
+        return
+
+    def load(self) -> None:
+        return
+
     def _cosine_similarity(self, left: list[float], right: list[float]) -> float:
         if len(left) != len(right):
             raise ValueError("left and right must have the same length")

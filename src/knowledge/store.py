@@ -11,3 +11,11 @@ class VectorStore(ABC):
     @abstractmethod
     def search(self, query_vector: list[float], top_k: int = 5) -> list[RetrievedChunk]:
         raise NotImplementedError
+
+    @abstractmethod
+    def save(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def load(self) -> None:
+        raise NotImplementedError

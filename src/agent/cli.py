@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from dataclasses import replace
 
 from src.agent import AgentConfig, Agent
 from src.core.logging import setup_logging
@@ -21,6 +22,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--plan-mode",
         choices=["auto", "enable", "disable"],
         help="Enable plan mode.",
+    )
+    parser.add_argument(
+        "--ingest",
+        help="Build and persist the knowledge index from the given path, then exit.",
     )
     parser.add_argument(
         "--memory-mode",
@@ -92,12 +97,22 @@ def run_once(
     print(response.content)
 
 
+def run_ingest(config: AgentConfig, ingest_path: str) -> None:
+    config = replace(config, knowledge_base_path=ingest_path)
+    Agent(config)
+    print(f"Knowledge index build and saved to: {config.knowledge_index_path}")
+
+
 def main() -> None:
     setup_logging()
     parser = build_parser()
     args = parser.parse_args()
 
     config = AgentConfig.from_env()
+    if args.ingest:
+        run_ingest(config, args.ingest)
+        return
+
     agent = Agent(config)
     piped_input = sys.stdin.read().strip() if not sys.stdin.isatty() else ""
 

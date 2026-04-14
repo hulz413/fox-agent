@@ -13,7 +13,7 @@ from src.tools.schemas import ToolDefinition
 from src.knowledge.chunker import TextChunker
 from src.knowledge.embeddings import SimpleEmbeddingProvider
 from src.knowledge.loader import DocumentLoader
-from src.knowledge.local_store import LocalVectorStore
+from src.knowledge.json_store import JsonVectorStore
 from src.knowledge.retriever import KnowledgeRetriever
 
 
@@ -28,7 +28,7 @@ class Agent:
             chunk_overlap=config.chunk_overlap,
         )
         self.embeddings_provider = SimpleEmbeddingProvider()
-        self.vector_store = LocalVectorStore()
+        self.vector_store = JsonVectorStore(config.knowledge_index_path)
         self.knowledge_retriever = KnowledgeRetriever(
             embedding_provider=self.embeddings_provider,
             vector_store=self.vector_store,
@@ -52,12 +52,15 @@ class Agent:
         )
 
     def _init_knowledge_base(self) -> None:
+        self.vector_store.load()
+
         if not self.config.knowledge_base_path:
             return
 
         documents = self.document_loader.load_path(self.config.knowledge_base_path)
         chunks = self.text_chunker.chunk_documents(documents)
         self.knowledge_retriever.index(chunks)
+        self.vector_store.save()
 
     def run(
         self,
