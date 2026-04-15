@@ -100,7 +100,7 @@ def run_once(
 def run_ingest(config: AgentConfig, ingest_path: str) -> None:
     config = replace(config, knowledge_base_path=ingest_path)
     Agent(config)
-    print(f"Knowledge index build and saved to: {config.knowledge_index_path}")
+    print(f"Knowledge index built and saved to: {config.knowledge_index_path}")
 
 
 def main() -> None:

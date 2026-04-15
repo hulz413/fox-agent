@@ -13,9 +13,9 @@ pip install -e .
 2. Create a .env file with the following variables
 
 ```env
-OPENAI_API_KEY=your_api_key
-OPENAI_BASE_URL=your_base_url
-OPENAI_MODEL=your_model
+FOX_AGENT_CHAT_API_KEY=your_api_key
+FOX_AGENT_CHAT_BASE_URL=your_base_url
+FOX_AGENT_CHAT_MODEL=your_model
 ```
 
 3. Run interactive chat

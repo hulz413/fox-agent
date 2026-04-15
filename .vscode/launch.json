@@ -5,15 +5,30 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: fox-agent",
+            "name": "Python Debugger: Chat",
             "type": "debugpy",
             "request": "launch",
-            "program": "src",
+            "module": "src",
             "args": [
                 "-p",
-                "'Summarize the project architecture'",
+                "'What is the codename of the project'",
                 "--retrieval-mode",
                 "auto"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+        },
+        {
+            "name": "Python Debugger: Ingest",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src",
+            "args": [
+                "--ingest",
+                "~/.fox-agent/docs"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

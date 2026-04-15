@@ -32,6 +32,11 @@ class AgentConfig:
     memory_store_path: str = "~/.fox-agent/memory_store.json"
     knowledge_base_path: str | None = None
     knowledge_index_path: str = "~/.fox-agent/knowledge_index.json"
+    embedding_provider: Literal["simple", "openai"] = "simple"
+    embedding_api_key: str | None = None
+    embedding_base_url: str | None = None
+    embedding_model: str | None = None
+    embedding_timeout: float = 60.0
     allowed_roots: list[str] = field(default_factory=lambda: ["."])
     allow_file_write: bool = False
     system_prompt: str | None = None
@@ -59,12 +64,22 @@ class AgentConfig:
             memory_store_path=os.getenv(
                 "FOX_AGENT_MEMORY_STORE_PATH", "~/.fox-agent/memory_store.json"
             ).strip(),
-            knowledge_base_path=os.getenv(
-                "FOX_AGENT_KNOWLEDGE_BASE_PATH", "~/.fox-agent/docs"
-            ).strip(),
+            knowledge_base_path=os.getenv("FOX_AGENT_KNOWLEDGE_BASE_PATH", "").strip()
+            or None,
             knowledge_index_path=os.getenv(
                 "FOX_AGENT_KNOWLEDGE_INDEX_PATH", "~/.fox-agent/knowledge_index.json"
             ).strip(),
+            embedding_provider=os.getenv(
+                "FOX_AGENT_EMBEDDING_PROVIDER", "simple"
+            ).strip(),
+            embedding_api_key=os.getenv("FOX_AGENT_EMBEDDING_API_KEY", "").strip()
+            or None,
+            embedding_base_url=os.getenv("FOX_AGENT_EMBEDDING_BASE_URL", "").strip()
+            or None,
+            embedding_model=os.getenv("FOX_AGENT_EMBEDDING_MODEL", "").strip() or None,
+            embedding_timeout=float(
+                os.getenv("FOX_AGENT_EMBEDDING_TIMEOUT", "60.0").strip()
+            ),
             allowed_roots=[
                 item.strip()
                 for item in os.getenv("FOX_AGENT_ALLOWED_ROOTS", ".").split(",")

@@ -5,7 +5,7 @@ from src.llm.schemas import LLMResponse, Message, ToolCall, Usage
 from src.tools.schemas import ToolDefinition
 
 
-class OpenAIProvider:
+class OpenAIChatProvider:
     def __init__(self, config: Config):
         self.config = config
         self.client = OpenAI(

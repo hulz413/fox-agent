@@ -12,6 +12,7 @@ from src.tools.registry import ToolRegistry
 from src.tools.schemas import ToolDefinition
 from src.knowledge.chunker import TextChunker
 from src.knowledge.embeddings import SimpleEmbeddingProvider
+from src.knowledge.openai_embedding_provider import OpenAIEmbeddingProvider
 from src.knowledge.loader import DocumentLoader
 from src.knowledge.json_store import JsonVectorStore
 from src.knowledge.retriever import KnowledgeRetriever
@@ -27,7 +28,7 @@ class Agent:
             chunk_size=config.chunk_size,
             chunk_overlap=config.chunk_overlap,
         )
-        self.embeddings_provider = SimpleEmbeddingProvider()
+        self.embeddings_provider = self._build_embedding_provider()
         self.vector_store = JsonVectorStore(config.knowledge_index_path)
         self.knowledge_retriever = KnowledgeRetriever(
             embedding_provider=self.embeddings_provider,
@@ -61,6 +62,26 @@ class Agent:
         chunks = self.text_chunker.chunk_documents(documents)
         self.knowledge_retriever.index(chunks)
         self.vector_store.save()
+
+    def _build_embedding_provider(self) -> None:
+        match self.config.embedding_provider:
+            case "simple":
+                return SimpleEmbeddingProvider()
+            case "openai":
+                if not self.config.embedding_api_key or not self.config.embedding_model:
+                    raise ValueError(
+                        "FOX_AGENT_EMBEDDING_API_KEY and FOX_AGENT_EMBEDDING_MODEL are all required when embedding_provider=openai"
+                    )
+                return OpenAIEmbeddingProvider(
+                    api_key=self.config.embedding_api_key,
+                    base_url=self.config.embedding_base_url,
+                    model=self.config.embedding_model,
+                    timeout=self.config.embedding_timeout,
+                )
+            case _:
+                raise ValueError(
+                    f"Unknown embedding_provider: {self.config.embedding_provider}"
+                )
 
     def run(
         self,
