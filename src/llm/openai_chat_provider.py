@@ -1,11 +1,13 @@
 import json
 from openai import OpenAI
+
 from src.core.config import Config
 from src.llm.schemas import LLMResponse, Message, ToolCall, Usage
 from src.tools.schemas import ToolDefinition
+from src.llm.chat_provider import ChatProvider
 
 
-class OpenAIChatProvider:
+class OpenAIChatProvider(ChatProvider):
     def __init__(self, config: Config):
         self.config = config
         self.client = OpenAI(

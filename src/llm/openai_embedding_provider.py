@@ -1,6 +1,6 @@
 from openai import OpenAI
 
-from src.knowledge.embeddings import EmbeddingProvider
+from src.llm.embedding_provider import EmbeddingProvider
 
 
 class OpenAIEmbeddingProvider(EmbeddingProvider):

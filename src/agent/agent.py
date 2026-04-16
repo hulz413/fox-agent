@@ -4,15 +4,18 @@ from typing import Literal
 from src.agent.config import AgentConfig
 from src.llm.client import LLMClient
 from src.llm.schemas import LLMResponse, Message
-from src.llm.session import ChatSession
+from src.llm.embedding_provider import EmbeddingProvider
+from src.llm.chat_provider import ChatProvider
+from src.llm.openai_chat_provider import OpenAIChatProvider
+from src.runtime.session import ChatSession
 from src.memory.json_store import JsonMemoryStore
 from src.planning.planner import Planner
 from src.tools.builtins import build_builtin_tools
 from src.tools.registry import ToolRegistry
 from src.tools.schemas import ToolDefinition
 from src.knowledge.chunker import TextChunker
-from src.knowledge.embeddings import SimpleEmbeddingProvider
-from src.knowledge.openai_embedding_provider import OpenAIEmbeddingProvider
+from src.llm.simple_embedding_provider import SimpleEmbeddingProvider
+from src.llm.openai_embedding_provider import OpenAIEmbeddingProvider
 from src.knowledge.loader import DocumentLoader
 from src.knowledge.json_store import JsonVectorStore
 from src.knowledge.retriever import KnowledgeRetriever
@@ -21,7 +24,7 @@ from src.knowledge.retriever import KnowledgeRetriever
 class Agent:
     def __init__(self, config: AgentConfig) -> None:
         self.config = config
-        self.client = LLMClient(config.to_llm_config())
+        self.client = LLMClient(self._build_chat_provider())
         self.memory_store = JsonMemoryStore(config.memory_store_path)
         self.document_loader = DocumentLoader()
         self.text_chunker = TextChunker(
@@ -63,7 +66,10 @@ class Agent:
         self.knowledge_retriever.index(chunks)
         self.vector_store.save()
 
-    def _build_embedding_provider(self) -> None:
+    def _build_chat_provider(self) -> ChatProvider:
+        return OpenAIChatProvider(self.config.to_llm_config())
+
+    def _build_embedding_provider(self) -> EmbeddingProvider:
         match self.config.embedding_provider:
             case "simple":
                 return SimpleEmbeddingProvider()

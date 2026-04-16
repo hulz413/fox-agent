@@ -2,7 +2,7 @@ import logging
 from typing import Literal
 from src.llm.client import LLMClient
 from src.llm.schemas import Message, LLMResponse, ToolCall
-from src.llm.session_config import SessionConfig
+from src.runtime.session_config import SessionConfig
 from src.tools.registry import ToolRegistry
 from src.tools.executor import ToolExecutor
 from src.tools.policy import ToolPolicy

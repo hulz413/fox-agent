@@ -1,12 +1,11 @@
-from src.core.config import Config
 from src.llm.schemas import LLMResponse, Message
-from src.llm.openai_chat_provider import OpenAIChatProvider
+from src.llm.chat_provider import ChatProvider
 from src.tools.schemas import ToolDefinition
 
 
 class LLMClient:
-    def __init__(self, config: Config):
-        self.provider = OpenAIChatProvider(config)
+    def __init__(self, provider: ChatProvider):
+        self.provider = provider
 
     def chat(
         self, messages: list[Message], tools: list[ToolDefinition] | None = None

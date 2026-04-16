@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 from src.core.config import Config as LLMConfig
-from src.llm.session_config import SessionConfig
+from src.runtime.session_config import SessionConfig
 from src.tools.policy import ToolPolicy
 
 

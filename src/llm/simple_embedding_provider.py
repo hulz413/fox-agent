@@ -1,14 +1,6 @@
-from abc import ABC, abstractmethod
 import math
 
-
-class EmbeddingProvider(ABC):
-    @abstractmethod
-    def embed_texts(self, texts: list[str]) -> list[list[float]]:
-        raise NotImplementedError
-
-    def embed_query(self, query: str) -> list[float]:
-        raise NotImplementedError
+from src.llm.embedding_provider import EmbeddingProvider
 
 
 class SimpleEmbeddingProvider(EmbeddingProvider):

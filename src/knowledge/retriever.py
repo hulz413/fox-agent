@@ -1,4 +1,4 @@
-from src.knowledge.embeddings import EmbeddingProvider
+from src.llm.embedding_provider import EmbeddingProvider
 from src.knowledge.schemas import Chunk, RetrievedChunk
 from src.knowledge.store import VectorStore
 
