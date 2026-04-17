@@ -92,6 +92,7 @@ class ChatSession:
             self._inject_knowledge_context(
                 user_input=user_input,
                 top_k=self.config.retrieval_top_k,
+                min_score=self.config.retrieval_min_score,
             )
 
         match plan_mode:
@@ -146,12 +147,17 @@ class ChatSession:
         self.add_system_message(context)
         self._last_memory_context = context
 
-    def _inject_knowledge_context(self, user_input: str, top_k: int = 5) -> None:
+    def _inject_knowledge_context(
+        self,
+        user_input: str,
+        top_k: int = 5,
+        min_score: float | None = None,
+    ) -> None:
         if not self.knowledge_retriever:
             logger.info("Knowledge retriever not configured")
             return
 
-        retrieved = self.knowledge_retriever.retrieve(user_input, top_k)
+        retrieved = self.knowledge_retriever.retrieve(user_input, top_k, min_score)
         context = self.knowledge_retriever.render(retrieved)
         if not context:
             logger.info("No relevant knowledge context retrieved")

@@ -23,6 +23,7 @@ class AgentConfig:
     max_steps: int = 10
     max_memory_records: int = 8
     retrieval_top_k: int = 5
+    retrieval_min_score: float | None = None
     chunk_size: int = 1000
     chunk_overlap: int = 200
     direct_memory_namespaces: list[str] = field(default_factory=lambda: ["user"])
@@ -44,6 +45,7 @@ class AgentConfig:
     @classmethod
     def from_env(cls) -> AgentConfig:
         llm_config = LLMConfig.from_env()
+        retrieval_min_score_raw = os.getenv("FOX_AGENT_RETRIEVAL_MIN_SCORE", "").strip()
 
         return cls(
             api_key=llm_config.api_key,
@@ -59,6 +61,9 @@ class AgentConfig:
                 os.getenv("FOX_AGENT_MAX_MEMORY_RECORDS", "8").strip()
             ),
             retrieval_top_k=int(os.getenv("FOX_AGENT_RETRIEVAL_TOP_K", "5").strip()),
+            retrieval_min_score=(
+                float(retrieval_min_score_raw) if retrieval_min_score_raw else None
+            ),
             chunk_size=int(os.getenv("FOX_AGENT_CHUNK_SIZE", "1000").strip()),
             chunk_overlap=int(os.getenv("FOX_AGENT_CHUNK_OVERLAP", "200").strip()),
             memory_store_path=os.getenv(
@@ -109,6 +114,7 @@ class AgentConfig:
             max_steps=self.max_steps,
             max_memory_records=self.max_memory_records,
             retrieval_top_k=self.retrieval_top_k,
+            retrieval_min_score=self.retrieval_min_score,
             direct_memory_namespaces=list(self.direct_memory_namespaces),
             planned_memory_namespaces=list(self.planned_memory_namespaces),
         )

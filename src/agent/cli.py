@@ -19,13 +19,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run a single prompt, print the response, then exit.",
     )
     parser.add_argument(
+        "--ingest",
+        help="Build and persist the knowledge index from the given path, then exit.",
+    )
+    parser.add_argument(
+        "--search",
+        help="Search the knowledge index and print retrieved chunks, then exit.",
+    )
+    parser.add_argument(
         "--plan-mode",
         choices=["auto", "enable", "disable"],
         help="Enable plan mode.",
-    )
-    parser.add_argument(
-        "--ingest",
-        help="Build and persist the knowledge index from the given path, then exit.",
     )
     parser.add_argument(
         "--memory-mode",
@@ -103,6 +107,10 @@ def run_ingest(config: AgentConfig, ingest_path: str) -> None:
     print(f"Knowledge index built and saved to: {config.knowledge_index_path}")
 
 
+def run_search(agent: Agent, search_query: str) -> None:
+    print(agent.render_knowledge_search(search_query))
+
+
 def main() -> None:
     setup_logging()
     parser = build_parser()
@@ -114,6 +122,10 @@ def main() -> None:
         return
 
     agent = Agent(config)
+    if args.search is not None:
+        run_search(agent, args.search)
+        return
+
     piped_input = sys.stdin.read().strip() if not sys.stdin.isatty() else ""
 
     if args.prompt is not None:

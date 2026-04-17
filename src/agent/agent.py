@@ -19,6 +19,7 @@ from src.llm.openai_embedding_provider import OpenAIEmbeddingProvider
 from src.knowledge.loader import DocumentLoader
 from src.knowledge.json_store import JsonVectorStore
 from src.knowledge.retriever import KnowledgeRetriever
+from src.knowledge.schemas import RetrievedChunk
 
 
 class Agent:
@@ -102,6 +103,18 @@ class Agent:
             memory_mode=memory_mode,
             retrieval_mode=retrieval_mode,
         )
+
+    def search_knowledge(
+        self, query: str, k: int | None = None
+    ) -> list[RetrievedChunk]:
+        return self.knowledge_retriever.retrieve(
+            query=query,
+            k=k,
+            min_score=self.config.retrieval_min_score,
+        )
+
+    def render_knowledge_search(self, query: str, k: int | None = None) -> str:
+        return self.knowledge_retriever.render_debug(self.search_knowledge(query, k=k))
 
     def register_tool(self, tool: ToolDefinition) -> None:
         self.tool_registry.register(tool)

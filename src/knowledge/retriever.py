@@ -21,9 +21,14 @@ class KnowledgeRetriever:
         )
         self.vector_store.upsert(chunks, vectors)
 
-    def retrieve(self, query: str, k: int = 3) -> list[RetrievedChunk]:
+    def retrieve(
+        self, query: str, k: int = 3, min_score: float | None = None
+    ) -> list[RetrievedChunk]:
         query_vector = self.embedding_provider.embed_query(query)
-        return self.vector_store.search(query_vector, k)
+        retrieved = self.vector_store.search(query_vector, k)
+        if min_score is None:
+            return retrieved
+        return [item for item in retrieved if item.score >= min_score]
 
     def render(self, retrieved: list[RetrievedChunk]) -> str:
         if not retrieved:
@@ -40,3 +45,23 @@ class KnowledgeRetriever:
             ]
         )
         return "\n".join(lines).strip()
+
+    def render_debug(self, retrieved: list[RetrievedChunk]) -> str:
+        if not retrieved:
+            return "No knowledge chunks matched."
+
+        lines: list[str] = []
+        for position, item in enumerate(retrieved, start=1):
+            preview = " ".join(item.chunk.content.split())
+            if len(preview) > 180:
+                preview = f"{preview[:180]}..."
+
+            lines.append(
+                f"[{position}] score={item.score:.4f} "
+                f"source={item.chunk.source} "
+                f"chunk={item.chunk.index} "
+                f"strategy={item.chunk.metadata.get('chunk_strategy', 'unknown')}"
+            )
+            lines.append(f"    {preview}")
+
+        return "\n".join(lines)
