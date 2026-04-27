@@ -28,7 +28,22 @@
             "module": "src",
             "args": [
                 "--ingest",
-                "~/.fox-agent/docs"
+                "./src"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+        },
+        {
+            "name": "Python Debugger: Eval",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "src",
+            "args": [
+                "--eval",
+                "./examples/rag_eval.jsonl"
             ],
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",

@@ -11,17 +11,17 @@ class OpenAIChatProvider(ChatProvider):
     def __init__(self, config: Config):
         self.config = config
         self.client = OpenAI(
-            api_key=config.api_key,
-            base_url=config.base_url,
-            timeout=config.timeout,
+            api_key=config.chat_api_key,
+            base_url=config.chat_base_url,
+            timeout=config.chat_timeout,
         )
 
     def chat(
         self, messages: list[Message], tools: list[dict] | None = None
     ) -> LLMResponse:
         payload: dict[str, object] = {
-            "model": self.config.model,
-            "temperature": self.config.temperature,
+            "model": self.config.chat_model,
+            "temperature": self.config.chat_temperature,
             "messages": [self._message_to_dict(message) for message in messages],
         }
         if tools:

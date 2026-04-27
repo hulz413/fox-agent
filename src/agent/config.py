@@ -48,11 +48,11 @@ class AgentConfig:
         retrieval_min_score_raw = os.getenv("FOX_AGENT_RETRIEVAL_MIN_SCORE", "").strip()
 
         return cls(
-            api_key=llm_config.api_key,
-            base_url=llm_config.base_url,
-            model=llm_config.model,
-            timeout=llm_config.timeout,
-            temperature=llm_config.temperature,
+            api_key=llm_config.chat_api_key,
+            base_url=llm_config.chat_base_url,
+            model=llm_config.chat_model,
+            timeout=llm_config.chat_timeout,
+            temperature=llm_config.chat_temperature,
             plan_mode=os.getenv("FOX_AGENT_PLAN_MODE", "disable").strip(),
             memory_mode=os.getenv("FOX_AGENT_MEMORY_MODE", "disable").strip(),
             retrieval_mode=os.getenv("FOX_AGENT_RETRIEVAL_MODE", "disable").strip(),
@@ -99,11 +99,16 @@ class AgentConfig:
 
     def to_llm_config(self) -> LLMConfig:
         return LLMConfig(
-            api_key=self.api_key,
-            base_url=self.base_url,
-            model=self.model,
-            timeout=self.timeout,
-            temperature=self.temperature,
+            chat_api_key=self.api_key,
+            chat_base_url=self.base_url,
+            chat_model=self.model,
+            chat_timeout=self.timeout,
+            chat_temperature=self.temperature,
+            embedding_provider=self.embedding_provider,
+            embedding_api_key=self.embedding_api_key,
+            embedding_base_url=self.embedding_base_url,
+            embedding_model=self.embedding_model,
+            embedding_timeout=self.embedding_timeout,
         )
 
     def to_session_config(self) -> SessionConfig:

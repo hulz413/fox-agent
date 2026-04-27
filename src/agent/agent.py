@@ -57,9 +57,8 @@ class Agent:
         )
 
     def _init_knowledge_base(self) -> None:
-        self.vector_store.load()
-
         if not self.config.knowledge_base_path:
+            self.vector_store.load()
             return
 
         documents = self.document_loader.load_path(self.config.knowledge_base_path)
@@ -108,9 +107,9 @@ class Agent:
         self, query: str, k: int | None = None
     ) -> list[RetrievedChunk]:
         return self.knowledge_retriever.retrieve(
-            query=query,
-            k=k,
-            min_score=self.config.retrieval_min_score,
+            query,
+            k or self.config.retrieval_top_k,
+            self.config.retrieval_min_score,
         )
 
     def render_knowledge_search(self, query: str, k: int | None = None) -> str:

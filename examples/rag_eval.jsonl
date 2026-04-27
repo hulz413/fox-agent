@@ -1,0 +1,10 @@
+{"query":"where is retrieval context injected into chat session","expected_sources":["src/runtime/session.py"]}
+{"query":"where is AgentConfig knowledge_index_path field defined","expected_sources":["src/agent/config.py"]}
+{"query":"where is _init_knowledge_base implemented","expected_sources":["src/agent/agent.py"]}
+{"query":"where is SUPPORTED_SUFFIXES defined","expected_sources":["src/knowledge/loader.py"]}
+{"query":"where does TextChunker generate chunks","expected_sources":["src/knowledge/chunker.py"]}
+{"query":"where is JsonVectorStore search implemented","expected_sources":["src/knowledge/json_store.py"]}
+{"query":"where is _build_embedding_provider implemented","expected_sources":["src/agent/agent.py"]}
+{"query":"where is retrieval_mode resolved in ChatSession","expected_sources":["src/runtime/session.py"]}
+{"query":"where is AgentConfig retrieval_top_k field defined","expected_sources":["src/agent/config.py"]}
+{"query":"where is KnowledgeRetriever render implemented","expected_sources":["src/knowledge/retriever.py"]}
