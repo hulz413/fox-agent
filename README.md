@@ -35,3 +35,26 @@ fox-agent -p "What is an AI agent?"
 ```bash
 cat log.txt | fox-agent -p "Analyze this log"
 ```
+
+## Local semantic embeddings with Ollama
+
+The default `FOX_AGENT_EMBEDDING_PROVIDER=simple` is a lightweight baseline. It hashes tokens into vectors, so it is useful for learning the RAG flow but is not true semantic retrieval.
+
+For local semantic embeddings, run an OpenAI-compatible embedding endpoint with Ollama:
+
+```bash
+ollama pull nomic-embed-text
+```
+
+Then add these variables to `.env`:
+
+```env
+FOX_AGENT_EMBEDDING_PROVIDER=openai
+FOX_AGENT_EMBEDDING_BASE_URL=http://localhost:11434/v1
+FOX_AGENT_EMBEDDING_API_KEY=ollama
+FOX_AGENT_EMBEDDING_MODEL=nomic-embed-text
+```
+
+`FOX_AGENT_EMBEDDING_API_KEY` can be any non-empty value for local Ollama. If Ollama is not already running, start it before running `fox-agent`.
+
+After switching embedding models, rebuild the knowledge index. Embeddings from different providers or models have different vector spaces and cannot be mixed in the same index.
